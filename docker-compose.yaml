@@ -1,0 +1,53 @@
+version: '3'
+services:
+  api: 
+    build: 
+      context: .
+      dockerfile: ./docker/local/django/Dockerfile
+    command: /start
+    # python3 manage.py runserver 
+    volumes:
+      -  .:/app
+      - static_volume:/app/static_files
+    # ports:
+    #   - "8000:8000"
+    env_file:
+      - .env.docker
+    depends_on:
+      - dev-db 
+    networks:
+      - test
+  dev-db:
+    image: postgres:12.0-alpine
+    ports:
+      - "5435:5432"
+    volumes:
+        - postgres_data:/var/lib/postgresql/data/
+    environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=manu
+        - POSTGRES_DB=estate
+    networks:
+        - test
+  nginx: 
+    build: 
+      context: ./docker/local/nginx
+      dockerfile: Dockerfile 
+    restart: always 
+    depends_on:
+      - api  
+    volumes:
+      -  .:/app
+      - static_volume:/app/static_files
+    ports:
+      - "8080:80"
+    networks:
+        - test
+    
+networks:
+  test: 
+    driver: bridge
+volumes:
+
+  postgres_data:
+  static_volume:
